@@ -6,6 +6,7 @@
 
 #ifndef ONBOARD_DETECTOR_UTILS_H
 #define ONBOARD_DETECTOR_UTILS_H
+// iomanip 用于输入输出操作的格式控制
 #include <iomanip>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -14,6 +15,7 @@
 
 namespace onboardDetector{
     const double PI_const = 3.1415926;
+    // onboardDetector 命名空间下box3D结构体
     struct box3D
     {
         /* data */
@@ -27,7 +29,7 @@ namespace onboardDetector{
         bool fix_size=false; // flag to force future boxes to fix size
         bool is_dynamic_candidate=false;
     };
-
+    // 欧拉角转四元数
     inline geometry_msgs::Quaternion quaternion_from_rpy(double roll, double pitch, double yaw)
     {
         if (yaw > PI_const){
@@ -38,7 +40,7 @@ namespace onboardDetector{
         geometry_msgs::Quaternion quaternion = tf2::toMsg(quaternion_tf2);
         return quaternion;
     }
-
+    // 根据四元数返回航向角
     inline double rpy_from_quaternion(const geometry_msgs::Quaternion& quat){
         // return is [0, 2pi]
         tf2::Quaternion tf_quat;
@@ -47,13 +49,16 @@ namespace onboardDetector{
         tf2::Matrix3x3(tf_quat).getRPY(roll, pitch, yaw);
         return yaw;
     }
-
+    // 根据四元数返回欧拉角
     inline void rpy_from_quaternion(const geometry_msgs::Quaternion& quat, double &roll, double &pitch, double &yaw){
         tf2::Quaternion tf_quat;
         tf2::convert(quat, tf_quat);
         tf2::Matrix3x3(tf_quat).getRPY(roll, pitch, yaw);
     }
-
+    // 计算两三维向量间夹角
+    // a dot b = a b cos(theta)
+    // a times b = a b sin(theta)
+    // theta = atan2( (a times b)/(a dot b) )
     inline double angleBetweenVectors(const Eigen::Vector3d& a, const Eigen::Vector3d& b){
         return std::atan2(a.cross(b).norm(), a.dot(b));
     }

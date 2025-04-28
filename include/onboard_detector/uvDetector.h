@@ -17,14 +17,16 @@
 #include <Eigen/Dense>
 
 namespace onboardDetector{
-    
+    // onboardDetector 中的 UVbox 类
     class UVbox
     {
         public:
-        // members
-        int id; // its id
-        int toppest_parent_id; // its toppest parent's id
-        cv::Rect bb; // bounding box
+        // UVbox id
+        int id; 
+        // UVbox 父级id
+        int toppest_parent_id; 
+        // bbox
+        cv::Rect bb; 
 
         // default constructor
         UVbox();
@@ -33,80 +35,110 @@ namespace onboardDetector{
     };
 
 
-
+    // onboardDetector 中的 UVtracker 类
     class UVtracker
     {
         public:
-        // members
-        std::vector<cv::Rect> pre_bb; // bounding box information
+        // 上次鸟瞰图的bbox
+        std::vector<cv::Rect> pre_bb; 
+        // 本次鸟瞰图的bbox
         std::vector<cv::Rect> now_bb; 
-        std::vector<vector<cv::Point2f> > pre_history; // thehistory of previous detection
-        std::vector<vector<cv::Point2f> > now_history; 
-        std::vector<kalman_filter> pre_filter; // states includes x, y, vx, vy, width, depth
-        std::vector<kalman_filter> now_filter;
-        std::vector<cv::Rect> now_bb_D; // depth bbox
-        std::vector<box3D> now_box_3D;
-        std::deque<deque<box3D>> now_box_3D_history; // 3D bbox history 
-        std::deque<deque<box3D>> pre_box_3D_history;
-        float overlap_threshold; // threshold to determind tracked or not
 
-        // track the sum of predicted velocity for calculating avg
+        // 上次鸟瞰图跟踪历史
+        std::vector<vector<cv::Point2f> > pre_history; 
+        // 本次鸟瞰图跟踪历史
+        std::vector<vector<cv::Point2f> > now_history; 
+
+        // 上次跟踪的卡尔曼滤波器
+        std::vector<kalman_filter> pre_filter; 
+        // 本次跟踪的卡尔曼滤波器
+        std::vector<kalman_filter> now_filter;
+
+        // 本次深度图检测到的bbox容器
+        std::vector<cv::Rect> now_bb_D;
+
+        // 本次深度图检测到的3Dbbox容器
+        std::vector<box3D> now_box_3D;
+
+        // 本次3Dbbox历史
+        std::deque<deque<box3D>> now_box_3D_history; 
+        // 上次3Dbbox历史
+        std::deque<deque<box3D>> pre_box_3D_history;
+
+        // 跟踪阈值
+        float overlap_threshold; 
+
+        // 跟踪预测速度总和，计算平均速度
+        // 上次跟踪速度
         std::deque<std::deque<Eigen::MatrixXd>> pre_V;
+        // 本次跟踪速度
         std::deque<std::deque<Eigen::MatrixXd>> now_V;
         
-        // count num of moving in all identification result
+        // 计数所有识别结果中的移动次数
         std::deque<std::deque<int>> pre_count;
         std::deque<std::deque<int>> now_count;
 
-        // store the fixed size of each box if it keep showing fully in FOV
+        // 如果每个方框一直完全显示在 FOV 中，则存储其固定大小
         std::vector<box3D> fixed_box3D;
 
-        // flag to fix box size
-        // vector<bool> pre_fix;
-        // vector<bool> now_fix;
 
-        // constructor
         UVtracker();
 
-        // read new bounding box information
+        // 读取边界框信息
         void read_bb(vector<cv::Rect> now_bb, vector<cv::Rect> now_bb_D, vector<box3D> &box_3D);
 
-        // check tracking status
+        // 检查跟踪状态
         void check_status(vector<box3D> &box_3D);
 
         
     };
-
+    
+    // onboardDetector 中的 UVdetector 类
     class UVdetector
     {
         public:
-        // members
-        cv::Mat depth; // depth map 
+        // 深度图
+        cv::Mat depth; 
         cv::Mat depth_show;
-        // Mat depth1; // depth map 
-        // Mat depth2; // depth map 
 
+        // RGB图像
         cv::Mat RGB;
-        cv::Mat depth_low_res; // depth map with low resolution
-        cv::Mat U_map; // U map
+        // 低分辨率深度图
+        cv::Mat depth_low_res; 
+        // U深度图
+        cv::Mat U_map; 
+        // 可视化U深度图
         cv::Mat U_map_show;
-        int min_dist; // lower bound of range of interest
-        int max_dist; // upper bound of range of interest
-        int row_downsample; // ratio (depth map's height / U map's height)
-        float col_scale; // scale factor in horizontal direction
-        float threshold_point; // threshold of point of interest
-        float threshold_line; // threshold of line of interest
-        int min_length_line; // min value of line's length
-        bool show_bounding_box_U; // show bounding box or not
-        std::vector<cv::Rect> bounding_box_U; // extracted bounding boxes on U map
-        std::vector<cv::Rect> bounding_box_B; // bounding boxes on the bird's view map
-        std::vector<cv::Rect> bounding_box_D; // bounding boxes on the depth map (not resized)
+        // 最小距离
+        int min_dist; 
+        // 最大距离
+        int max_dist; 
+        // 比率（深度图高度/U 图高度）
+        int row_downsample; 
+        // 水平方向的比例系数
+        float col_scale; 
+        // 感兴趣点阈值
+        float threshold_point; 
+        // 感兴趣线阈值
+        float threshold_line; 
+        // 最小长度线阈值
+        int min_length_line; 
+        // 是否显示3D边框
+        bool show_bounding_box_U; 
+        // u-depth 提取的bbox
+        std::vector<cv::Rect> bounding_box_U; 
+        // 鸟瞰图上的bbox
+        std::vector<cv::Rect> bounding_box_B; 
+        // 深度图上的bbox
+        std::vector<cv::Rect> bounding_box_D; 
         // main output/topic published
-        std::vector<box3D> box3Ds; // 3D bounding boxes in cam frame
+        // 输出3D框
+        std::vector<box3D> box3Ds; 
         std::vector<box3D> box3DsWorld;
         // vector<box3D> person_box3Ds;// 3D bboxes in world frame for persons
         
         // x,y coords of topleft corner of incoming crop from yolo
+        // yolo边框左上角坐标
         int x0;
         int y0;
 
@@ -114,34 +146,38 @@ namespace onboardDetector{
         int testx;
         int testy;
         int testby;
-
-        float fx; // focal length
+        // 相机焦距
+        float fx; 
         float fy;
-        float px; // principle point
+        // 相机主轴坐标
+        float px; 
         float py;
-        double depthScale_; // value / depthScale
-        cv::Mat bird_view; // bird's view map 
-        UVtracker tracker; // tracker in bird's view map
-
+        // 比例因子，用于将深度值从原始单位转换为实际单位
+        double depthScale_; 
+        // 鸟瞰图
+        cv::Mat bird_view; 
+        // 鸟瞰图上进行跟踪
+        UVtracker tracker; 
+        
         // constructor
         UVdetector();
 
-        // read data
+        // 读取队列深度图
         void readdata(queue<cv::Mat> depthq);
 
-        // read depth. called by yolo
+        // 读取深度图
         void readdepth(cv::Mat depth);
 
-        // read rgb
+        // 读取RGB
         void readrgb(cv::Mat RGB);
 
-        // extract U map
+        // 生成u-depth
         void extract_U_map();
 
-        // extract bounding box
+        // 生成U-depth图上的bbox
         void extract_bb();
 
-        // extract bird's view map
+        // 生成鸟瞰图
         void extract_bird_view();
 
         // detect
